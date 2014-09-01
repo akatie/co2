@@ -1,0 +1,48 @@
+---
+title: "Hungarian Data"
+author: "Kate Davis"
+date: "09/01/2014"
+output: html_document
+---
+
+From the CDAIC Hungarian Data
+
+http://cdiac.ornl.gov
+
+http://cdiac.ornl.gov/ftp/trends/co2/kpuszta.co2
+
+
+```{r}
+dataurl="http://cdiac.ornl.gov/ftp/trends/co2/kpuszta.co2"
+raw=read.table(dataurl,header=F,stringsAsFactors=F,skip=13,nrows=17)
+names(raw)=c("Year",month.abb,"Annual")
+print(raw)
+require(reshape2)
+hco2=melt(raw,id.vars="Year",variable.name="Month",value.name="Co2")
+hco2$Month=as.character(hco2$Month)
+hco2$mdate=with(hco2,as.Date(paste(Year,Month,"01",sep="-"),format="%Y-%B-%d"))
+missing=(hco2$Co2<0)
+hco2$Co2[missing]=NA
+hco2$seq=(1:nrow(hco2))
+print(hco2)
+```
+![http://cdiac.ornl.gov/trends/co2/graphics/kpuszta.gif]
+
+```{r, echo=FALSE}
+require(ggplot2)
+require(ggthemes)
+nplot=ggplot(hco2,aes(mdate,Co2))+theme_tufte()+geom_point()
+print(nplot)
+nplot=nplot+ylim(0,400)
+print(nplot)
+
+nplot=ggplot(hco2,aes(Month,Co2,color=Year))+theme_tufte()+geom_point()
+print(nplot)
+nplot=nplot+ylim(0,400)
+print(nplot)
+
+hco2nm=hco2[!is.na(hco2$Co2),]
+bratio=with(hco2nm,bank_slopes(as.numeric(mdate),Co2))
+nplot=nplot+coord_fixed(ratio=bratio)
+#print(nplot)
+```
